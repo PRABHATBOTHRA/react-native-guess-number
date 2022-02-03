@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Button, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Button, StyleSheet, Text, View, Alert } from "react-native";
 import Card from "../components/Card";
 import NumberContainer from "../components/NumberContainer";
 
@@ -19,13 +19,52 @@ const GameScreen = (props) => {
   const [currentGuess, setCurrentGuess] = useState(
     generateRandomBetween(1, 100, props.userChoice)
   );
+  const [rounds, setRound] = useState(0);
+  const currentLow = useRef(1);
+  const currentHigh = useRef(100);
+
+  const { userChoice, OnGameOver } = props;
+
+  useEffect(() => {
+    if (currentGuess === userChoice) {
+      OnGameOver(rounds);
+    }
+  }, [currentGuess, userChoice, OnGameOver]);
+
+  const nextGuessHandler = (direction) => {
+    if (
+      (direction === "lower" && currentGuess < props.userChoice) ||
+      (direction === "greater " && currentGuess > props.userChoice)
+    ) {
+      Alert.alert("Don't Lie", "You know that is wrong...", [
+        { text: "Sorry!", style: "cancel" },
+      ]);
+      return;
+    }
+    if (direction === "lower") {
+      currentHigh.current = currentGuess;
+    } else {
+      currentLow.current = currentGuess;
+    }
+    const nextNumber = generateRandomBetween(
+      currentHigh.current,
+      currentLow.current,
+      currentGuess
+    );
+    setCurrentGuess(nextNumber);
+    setRound((curRound) => curRound + 1);
+  };
+
   return (
     <View style={styles.screen}>
       <Text>Oppopent's Guess:</Text>
       <NumberContainer>{currentGuess}</NumberContainer>
       <Card style={styles.buttonContainer}>
-        <Button title="LOWER" onPress={() => {}} />
-        <Button title="GREATER" onPress={() => {}} />
+        <Button title="LOWER" onPress={nextGuessHandler.bind(this, "lower")} />
+        <Button
+          title="GREATER"
+          onPress={nextGuessHandler.bind(this, "greater")}
+        />
       </Card>
     </View>
   );
